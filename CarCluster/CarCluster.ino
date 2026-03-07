@@ -31,7 +31,7 @@
 
 // Configure the maximum RPM value shown on the cluster
 // Leave at 0 for using the defaults based on the cluster. Change this is your cluster has different limits
-#define MAXIMUM_RPM 7000
+#define MAXIMUM_RPM 7500
 
 // A correction factor for the RPM value. RPM will be multiplied by this value.
 // This enables you to fix displayed values that are slightly off, though you might not be able
@@ -341,7 +341,7 @@ void loop() {
       ESP.getFreeHeap(),
       ESP.getMinFreeHeap());
   }
-   delay(1);
+  //  delay(1);
 }
 
 void readSerialJson() {

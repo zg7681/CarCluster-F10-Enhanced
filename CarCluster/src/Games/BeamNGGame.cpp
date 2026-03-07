@@ -9,7 +9,7 @@
 BeamNGGame::BeamNGGame(GameState& game, int port): Game(game) {
   this->port = port;
 }
-
+  
 void BeamNGGame::begin() {
 
   // ===== Protocol switch (can later be made runtime) =====
@@ -22,9 +22,23 @@ void BeamNGGame::begin() {
 
   beamUdp.onPacket([this](AsyncUDPPacket packet) {
 
+    // ===== UDP frequency monitor =====
+    static uint32_t packetCount = 0;
+    static uint32_t lastPrintMs = 0;
+
+    packetCount++;
+
+    uint32_t nowMs = millis();
+    if (nowMs - lastPrintMs >= 1000) {
+      Serial.print("[DEBUG] UDP packets per second: ");
+      Serial.println(packetCount);
+      packetCount = 0;
+      lastPrintMs = nowMs;
+    }
+
     // ===== DEBUG: confirm UDP reception =====
-    Serial.print("[UDP] packet received, size=");
-    Serial.println(packet.length());
+    // Serial.print("[UDP] packet received, size=");
+    // Serial.println(packet.length());
 
     // ---- Reset volatile indicators each frame ----
     gameState.leftTurningIndicator = false;
@@ -32,6 +46,7 @@ void BeamNGGame::begin() {
     gameState.highBeam = false;
     gameState.absLight = false;
     gameState.handbrake = false;
+    gameState.offroadLight = false;   // used by BMW cluster code as DSC/traction indicator
 
     if (useCustomProtocol) {
 
@@ -39,7 +54,8 @@ void BeamNGGame::begin() {
         uint32_t time;
         float speedKmh;
         float rpm;
-        char gearLetter[2];
+        char     gearLetter;
+        uint8_t  gearIndex;
 
         uint8_t ignition;
         uint8_t engineRunning;
@@ -90,6 +106,17 @@ void BeamNGGame::begin() {
         float fuel;
         float waterTemp;
         float oilTemp;
+
+        uint8_t tireDefFL;
+        uint8_t tireDefFR;
+        uint8_t tireDefRL;
+        uint8_t tireDefRR;
+
+        // Driver input / physics (must match Lua struct order exactly)
+        float throttleInput;
+        float brakeInput;
+        float engineLoad;
+        float airspeedKmh;
       };
 
       if (packet.length() < sizeof(BMWPacket)) return;
@@ -97,14 +124,35 @@ void BeamNGGame::begin() {
       BMWPacket data;
       memcpy(&data, packet.data(), sizeof(BMWPacket));
 
-      if (data.gearLetter[0] == 'R') {
-        gameState.gear = GearState_Auto_R;
-      } else if (data.gearLetter[0] == 'N') {
-        gameState.gear = GearState_Auto_N;
-      } else if (data.gearLetter[0] == 'P') {
+      // --- Gear decision logic moved here (cluster only displays) ---
+      gameState.gearIndex = data.gearIndex;
+
+      char g = data.gearLetter;
+
+      if (g == 'P') {
         gameState.gear = GearState_Auto_P;
-      } else {
+      }
+      else if (g == 'R') {
+        gameState.gear = GearState_Auto_R;
+      }
+      else if (g == 'N') {
+        gameState.gear = GearState_Auto_N;
+      }
+      else if (g == 'D') {
         gameState.gear = GearState_Auto_D;
+      }
+      else if (g == 'S') {
+        gameState.gear = GearState_Auto_S;
+      }
+      else if (g == 'M') {
+        if (data.gearIndex >= 1 && data.gearIndex <= 8) {
+          gameState.gear = static_cast<GearState>(GearState_Manual_1 + (data.gearIndex - 1));
+        } else {
+          gameState.gear = GearState_Manual_1;
+        }
+      }
+      else {
+        gameState.gear = GearState_Auto_N;
       }
 
       static float speedFiltered = 0.0f;
@@ -119,13 +167,19 @@ void BeamNGGame::begin() {
       // Temperature (use oil temp instead of water temp)
       gameState.coolantTemperature = data.oilTemp;
 
-      // Fuel (BeamNG fuel is 0.0 ~ 1.0, convert to 0 ~ 100)
-      gameState.fuelQuantity = (int)(data.fuel * 100.0f);
+      // Fuel mapping: keep full float precision (no cast)
+      gameState.fuelQuantity = data.fuel;
 
       gameState.highBeam  = data.highBeam;
-      gameState.mainLights            = data.lowBeam;
-      gameState.absLight             = data.absActive;
-      gameState.handbrake            = data.parkingBrake;
+      gameState.mainLights = (data.lowBeam != 0);
+
+      // ABS lamp: ONLY light when ABS is actively intervening
+      gameState.absLight  = (data.absActive != 0);
+
+      gameState.handbrake = (data.parkingBrake != 0);
+
+      // DSC/traction indicator: ONLY light when ESC is actively intervening
+      gameState.offroadLight = (data.escActive != 0);
       // Ignition logic:
       // 0 = off
       // 1 = accessory AND ignition ON
@@ -149,6 +203,18 @@ void BeamNGGame::begin() {
       gameState.batteryLight = data.battery;
       gameState.engineLight  = data.checkengine;
       gameState.lowFuelLight = data.lowfuel;
+
+      // TPMS mapping (BeamNG custom protocol)
+      gameState.tireDefFL = (data.tireDefFL != 0);
+      gameState.tireDefFR = (data.tireDefFR != 0);
+      gameState.tireDefRL = (data.tireDefRL != 0);
+      gameState.tireDefRR = (data.tireDefRR != 0);
+
+      // Door mapping (BeamNG custom protocol)
+      gameState.doorFL = (data.doorFL != 0);
+      gameState.doorFR = (data.doorFR != 0);
+      gameState.doorRL = (data.doorRL != 0);
+      gameState.doorRR = (data.doorRR != 0);
 
       // Cruise control mapping (custom BMW protocol)
       gameState.cruiseControlActive = (data.cruiseControlActive != 0);

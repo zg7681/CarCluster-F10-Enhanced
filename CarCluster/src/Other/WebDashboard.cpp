@@ -60,10 +60,21 @@ void WebDashboard::setState(struct state *data) {
   gameState.turningIndicatorsBlinking = data->indicators_blink;
 }
 
+
 void WebDashboard::steeringWheelAction(struct mg_str params) {
   if (params.len >= 1) {
-    gameState.buttonEventToProcess = params.buf[0];
+    gameState.buttonEventToProcess = params.buf[0] - '0';
+    Serial.println(gameState.buttonEventToProcess);
+
   }
+}
+
+void WebDashboard::alertStart(struct mg_str params) {
+  gameState.alertStart = true;
+}
+
+void WebDashboard::alertClear(struct mg_str params) {
+  gameState.alertClear = true;
 }
 
 const char* WebDashboard::mapGenericGearToLocalGear(GearState inputGear) {

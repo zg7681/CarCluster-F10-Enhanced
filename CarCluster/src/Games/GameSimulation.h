@@ -108,11 +108,13 @@ class GameState {
   // Main parameters
   int speed = 0;                                     // Car speed in km/h
   int rpm = 0;                                       // Set the rev counter
-  enum GearState gear = GearState_Auto_P;            // The gear that the car is in
+  GearState gear = GearState_Auto_P;                 // Unified gear state for clusters
+  char gearLetter = 'P';
+  uint8_t gearIndex = 0;                             // Numeric gear index (1-8)
   uint8_t backlightBrightness = 100;                 // Backlight brightness 0-99
   int coolantTemperature = 100;                      // Coolant temperature 50-130C
   int oilTemperature = 100;                          // Engine oil temperature
-  bool ignition = true;                              // Ignition status (set to false for accessory)
+  bool ignition = false;                              // Ignition status (set to false for accessory)
   int fuelQuantity = 20;                            // Amount of fuel
   int outdoorTemperature = 20;                       // Outdoor temperature (from -50 to 50)
   unsigned long time;   // simulation time (ms)
@@ -127,6 +129,10 @@ class GameState {
   bool frontFogLight = false;                        // Enable front fog light indicator
   bool highBeam = false;                             // Enable High Beam Light
   bool doorOpen = false;                             // Simulate open doors
+  bool doorFL = false;            // Front Left door open
+  bool doorFR = false;            // Front Right door open
+  bool doorRL = false;            // Rear Left door open
+  bool doorRR = false;            // Rear Right door open
   bool offroadLight = false;                         // Simulates Offroad drive mode
   uint8_t driveMode = 2;                             // Current drive mode for BMW: 1= Traction, 2= Comfort+, 4= Sport, 5= Sport+, 6= DSC off, 7= Eco pro 
   bool absLight = false;                             // Shows ABS Signal on dashboard
@@ -139,10 +145,24 @@ class GameState {
   bool cruiseControlActive = false;  // Cruise control active
   float cruiseControlTarget = 0;     // Cruise target speed (km/h)
   bool escActive = false;            // ESC currently intervening
+  uint8_t esc = 0;                   // Raw ESC flag from protocol (0 = normal, 1 = traction event)
+  bool escDisabled = false;          // ESC manually disabled (derived from protocol)
   bool hasESC = true;                // Vehicle equipped with ESC
   bool tcsActive = false;            // Traction control active
   bool hasTCS = true;                // Vehicle equipped with TCS
 
+  // ===============================
+  // TPMS (BeamNG deflation state)
+  // ===============================
+  bool tireDefFL = false;   // Front Left tyre deflated
+  bool tireDefFR = false;   // Front Right tyre deflated
+  bool tireDefRL = false;   // Rear Left tyre deflated
+  bool tireDefRR = false;   // Rear Right tyre deflated
+  bool tpmsBlowout = false;
+  // Returns true if any tyre is deflated (used for TPMS warning trigger)
+  bool isAnyTyreDeflated() const {
+    return tireDefFL || tireDefFR || tireDefRL || tireDefRR || tpmsBlowout;
+  }
   // Other stuff
   int buttonEventToProcess = 0;                      // Certain clusters have buttons that can perform actions. Set this to activate them - values are cluster dependent
 
@@ -151,6 +171,17 @@ class GameState {
   bool alertStart = false;
   bool alertClear = false;
 
+
+  bool limActive = false;
+  uint8_t limSetSpeed = 0;   // km/h
+
+  // ===============================
+  // Driver input (Sim / Physics layer)
+  // ===============================
+  float throttleInput = 0.0f;   // 0.0 - 1.0
+  float brakeInput = 0.0f;      // 0.0 - 1.0
+  float engineLoad = 0.0f;      // 0.0 - 1.0
+  float airspeedKmh = 0.0f;     // airspeed in km/h (for high-speed realism)
 
   GameState(ClusterConfiguration configuration) {
     this->configuration = configuration;

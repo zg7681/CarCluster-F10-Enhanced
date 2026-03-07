@@ -35,6 +35,12 @@ class BeamNGGame: public Game {
     // Engine start timing (for delayed CAN messages)
     unsigned long engineStartTimestamp = 0;
     bool engineWasRunning = false;
+
+    // ===== Extended physics inputs (for custom CAN realism) =====
+    float lastThrottleInput = 0.0f;
+    float lastBrakeInput = 0.0f;
+    float lastEngineLoad = 0.0f;
+    float lastAirspeedKmh = 0.0f;
 };
 
 #endif
