@@ -17,7 +17,7 @@ This fork introduces a rewritten BMW F10 adaptation layer and extended LCD funct
 
 ---
 
-![Main image](https://github.com/r00li/CarCluster/blob/main/Misc/main_display.jpg?raw=true)
+![Main image](https://github.com/JackieZ123430/CarCluster-F10-Enhanced/blob/main/Misc/main_display.jpeg?raw=true)
 
 ---
 
