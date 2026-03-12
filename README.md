@@ -10,6 +10,8 @@ Thanks to r00li for the original CarCluster project.
 ---
 
 ## What is this?
+已经根据原项目做了更多对于F系列仪表的功能性改进
+Further functional improvements for BMW F-series clusters have been implemented on top of the original project.
 
 CarCluster-F10-Enhanced allows you to control a real BMW F10 instrument cluster using an ESP32 and CAN interface.
 
