@@ -542,14 +542,15 @@ void BMWFSeriesCluster::updateWithGame(GameState& game) {
 
     // ===============================
     // Overspeed >120km/h → CAN62
+    // 如果想模拟Beamng里的超速提示 把这个解除注释可以显示 当速度超过120则显示超速
     // ===============================
-    if (game.speed > 120) {
-      uint8_t msg62_on[] = { 0x40, 62, 0x00, 0x29, 0xFF, 0xFF, 0xFF, 0xFF };
-      CAN.sendMsgBuf(0x5C0, 0, 8, msg62_on);
-    } else {
-      uint8_t msg62_off[] = { 0x40, 62, 0x00, 0x28, 0xFF, 0xFF, 0xFF, 0xFF };
-      CAN.sendMsgBuf(0x5C0, 0, 8, msg62_off);
-    }
+    // if (game.speed > 120) {
+    //   uint8_t msg62_on[] = { 0x40, 62, 0x00, 0x29, 0xFF, 0xFF, 0xFF, 0xFF };
+    //   CAN.sendMsgBuf(0x5C0, 0, 8, msg62_on);
+    // } else {
+    //   uint8_t msg62_off[] = { 0x40, 62, 0x00, 0x28, 0xFF, 0xFF, 0xFF, 0xFF };
+    //   CAN.sendMsgBuf(0x5C0, 0, 8, msg62_off);
+    // }
 
     // ===============================
     // Engine warning lamp → CC-ID 34 / 30 / 22 / 50
