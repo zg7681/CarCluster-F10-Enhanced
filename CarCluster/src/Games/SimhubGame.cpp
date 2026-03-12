@@ -13,27 +13,31 @@ void SimhubGame::begin() {
 }
 
 void SimhubGame::decodeSerialData(JsonDocument& doc) {
-  gameState.rpm = doc["rpm"];
-  int max_rpm = doc["mrp"];
 
-  const char* simGear = doc["gea"];
-  switch(simGear[0]) {
-    case '1': gameState.gear = GearState_Manual_1; break;
-    case '2': gameState.gear = GearState_Manual_2; break;
-    case '3': gameState.gear = GearState_Manual_3; break;
-    case '4': gameState.gear = GearState_Manual_4; break;
-    case '5': gameState.gear = GearState_Manual_5; break;
-    case '6': gameState.gear = GearState_Manual_6; break;
-    case '7': gameState.gear = GearState_Manual_7; break;
-    case '8': gameState.gear = GearState_Manual_8; break;
-    case '9': gameState.gear = GearState_Manual_9; break;
-    case 'P': gameState.gear = GearState_Auto_P; break;
-    case 'R': gameState.gear = GearState_Auto_R; break;
-    case 'N': gameState.gear = GearState_Auto_N; break;
-    case 'D': gameState.gear = GearState_Auto_D; break;
+  gameState.rpm = doc["rpm"];
+
+  int simGear = doc["gea"];
+
+  if (simGear > 0) {
+
+    gameState.gear = GearState_Auto_D;
+    gameState.gearIndex = simGear;
+
+  }
+  else if (simGear == 0) {
+
+    gameState.gear = GearState_Auto_N;
+    gameState.gearIndex = 0;
+
+  }
+  else if (simGear == -1) {
+
+    gameState.gear = GearState_Auto_R;
+    gameState.gearIndex = 0;
+
   }
 
-  gameState.speed = doc["spe"];  
+  gameState.speed = doc["spe"];
   gameState.leftTurningIndicator = doc["lft"];
   gameState.rightTurningIndicator = doc["rit"];
   gameState.coolantTemperature = doc["oit"];
